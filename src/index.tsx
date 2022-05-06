@@ -2,7 +2,6 @@ import React, {PureComponent} from 'react';
 import {
     Animated,
     Easing,
-    I18nManager,
     Image,
     ImageSourcePropType,
     LayoutChangeEvent,
@@ -187,6 +186,7 @@ export class Slider extends PureComponent<SliderProps, SliderState> {
         trackClickable: true,
         value: 0,
         vertical: false,
+        inverted: false,
     };
 
     static getDerivedStateFromProps(props: SliderProps, state: SliderState) {
@@ -353,20 +353,20 @@ export class Slider extends PureComponent<SliderProps, SliderState> {
     };
     _getThumbLeft = (value: number) => {
         const {containerSize, thumbSize} = this.state;
-        const {vertical} = this.props;
+        const {vertical, inverted} = this.props;
 
         const standardRatio = this._getRatio(value);
 
-        const ratio = I18nManager.isRTL ? 1 - standardRatio : standardRatio;
+        const ratio = inverted ? 1 - standardRatio : standardRatio;
         return ratio * ((vertical ? containerSize.height : containerSize.width) - thumbSize.width);
     };
     _getValue = (gestureState: {dx: number, dy: number}) => {
         const {containerSize, thumbSize, values} = this.state;
-        const {maximumValue, minimumValue, step, vertical} = this.props;
+        const {maximumValue, minimumValue, step, vertical, inverted} = this.props;
         const length = containerSize.width - thumbSize.width;
         const thumbLeft = vertical ? this._previousLeft + (gestureState.dy * -1) : this._previousLeft + gestureState.dx;
-        const nonRtlRatio = thumbLeft / length;
-        const ratio = I18nManager.isRTL ? 1 - nonRtlRatio : nonRtlRatio;
+        const nonInvertedRatio = thumbLeft / length;
+        const ratio = inverted ? 1 - nonInvertedRatio : nonInvertedRatio;
         let minValue = minimumValue;
         let maxValue = maximumValue;
 
@@ -617,6 +617,7 @@ export class Slider extends PureComponent<SliderProps, SliderState> {
             thumbTintColor,
             trackStyle,
             vertical,
+            inverted,
             ...other
         } = this.props;
         const {
@@ -629,7 +630,7 @@ export class Slider extends PureComponent<SliderProps, SliderState> {
         const interpolatedThumbValues = values.map((value) =>
             value.interpolate({
                 inputRange: [minimumValue, maximumValue],
-                outputRange: I18nManager.isRTL
+                outputRange: inverted
                     ? [0, -(containerSize.width - thumbSize.width)]
                     : [0, containerSize.width - thumbSize.width],
             }),
@@ -645,7 +646,7 @@ export class Slider extends PureComponent<SliderProps, SliderState> {
             trackMarksValues.map((v) =>
                 v.interpolate({
                     inputRange: [minimumValue, maximumValue],
-                    outputRange: I18nManager.isRTL
+                    outputRange: inverted
                         ? [0, -(containerSize.width - thumbSize.width)]
                         : [0, containerSize.width - thumbSize.width],
                 }),

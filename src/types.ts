@@ -41,6 +41,7 @@ export type SliderProps = {
     trackStyle?: ViewStyle;
     value?: Animated.Value | number | Array<number>;
     vertical?: boolean;
+    inverted?: boolean;
 };
 
 export type SliderState = {
