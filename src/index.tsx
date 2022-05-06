@@ -2,7 +2,6 @@ import React, {PureComponent} from 'react';
 import {
     Animated,
     Easing,
-    I18nManager,
     Image,
     ImageSourcePropType,
     LayoutChangeEvent,
@@ -25,11 +24,11 @@ type RectReturn = {
 };
 
 const Rect = ({
-    height,
-    width,
-    x,
-    y,
-}: {
+                  height,
+                  width,
+                  x,
+                  y,
+              }: {
     height: number;
     width: number;
     x: number;
@@ -90,9 +89,9 @@ const normalizeValue = (
 };
 
 const updateValues = ({
-    values,
-    newValues = values,
-}: {
+                          values,
+                          newValues = values,
+                      }: {
     values: number | Array<number> | Animated.Value | Array<Animated.Value>;
     newValues?: number | Array<number> | Animated.Value | Array<Animated.Value>;
 }): Animated.Value[] => {
@@ -141,13 +140,13 @@ export class Slider extends PureComponent<SliderProps, SliderState> {
         super(props);
         this._panResponder = PanResponder.create({
             onStartShouldSetPanResponder:
-                this._handleStartShouldSetPanResponder,
+            this._handleStartShouldSetPanResponder,
             onMoveShouldSetPanResponder: this._handleMoveShouldSetPanResponder,
             onPanResponderGrant: this._handlePanResponderGrant,
             onPanResponderMove: this._handlePanResponderMove,
             onPanResponderRelease: this._handlePanResponderEnd,
             onPanResponderTerminationRequest:
-                this._handlePanResponderRequestEnd,
+            this._handlePanResponderRequestEnd,
             onPanResponderTerminate: this._handlePanResponderEnd,
         });
         this.state = {
@@ -187,6 +186,7 @@ export class Slider extends PureComponent<SliderProps, SliderState> {
         trackClickable: true,
         value: 0,
         vertical: false,
+        inverted: false,
     };
 
     static getDerivedStateFromProps(props: SliderProps, state: SliderState) {
@@ -240,10 +240,10 @@ export class Slider extends PureComponent<SliderProps, SliderState> {
     _handleStartShouldSetPanResponder = (
         e: any,
     ): /* gestureState: GestureState */
-    boolean => this._thumbHitTest(e); // Should we become active when the user presses down on the thumb?
+        boolean => this._thumbHitTest(e); // Should we become active when the user presses down on the thumb?
 
     _handleMoveShouldSetPanResponder(): /* e, gestureState: GestureState */
-    boolean {
+        boolean {
         // Should we become active when the user moves a touch over the thumb?
         return false;
     }
@@ -276,10 +276,10 @@ export class Slider extends PureComponent<SliderProps, SliderState> {
 
     _handlePanResponderRequestEnd = () =>
         /* e, gestureState: GestureState */
-        {
-            // Should we allow another component to take over this pan?
-            return false;
-        };
+    {
+        // Should we allow another component to take over this pan?
+        return false;
+    };
 
     _handlePanResponderEnd = (_e: any, gestureState: any) => {
         if (this.props.disabled) {
@@ -357,7 +357,7 @@ export class Slider extends PureComponent<SliderProps, SliderState> {
 
         const standardRatio = this._getRatio(value);
 
-        const ratio = I18nManager.isRTL ? 1 - standardRatio : standardRatio;
+        const ratio = this.props.inverted ? 1 - standardRatio : standardRatio;
         return ratio * ((vertical ? containerSize.height : containerSize.width) - thumbSize.width);
     };
     _getValue = (gestureState: {dx: number, dy: number}) => {
@@ -365,8 +365,8 @@ export class Slider extends PureComponent<SliderProps, SliderState> {
         const {maximumValue, minimumValue, step, vertical} = this.props;
         const length = containerSize.width - thumbSize.width;
         const thumbLeft = vertical ? this._previousLeft + (gestureState.dy * -1) : this._previousLeft + gestureState.dx;
-        const nonRtlRatio = thumbLeft / length;
-        const ratio = I18nManager.isRTL ? 1 - nonRtlRatio : nonRtlRatio;
+        const nonInvertedRatio = thumbLeft / length;
+        const ratio = this.props.inverted ? 1 - nonInvertedRatio : nonInvertedRatio;
         let minValue = minimumValue;
         let maxValue = maximumValue;
 
@@ -388,10 +388,10 @@ export class Slider extends PureComponent<SliderProps, SliderState> {
                 Math.min(
                     maxValue,
                     minimumValue +
-                        Math.round(
-                            (ratio * (maximumValue - minimumValue)) / step,
-                        ) *
-                            step,
+                    Math.round(
+                        (ratio * (maximumValue - minimumValue)) / step,
+                    ) *
+                    step,
                 ),
             );
         }
@@ -617,6 +617,7 @@ export class Slider extends PureComponent<SliderProps, SliderState> {
             thumbTintColor,
             trackStyle,
             vertical,
+            inverted,
             ...other
         } = this.props;
         const {
@@ -629,7 +630,7 @@ export class Slider extends PureComponent<SliderProps, SliderState> {
         const interpolatedThumbValues = values.map((value) =>
             value.interpolate({
                 inputRange: [minimumValue, maximumValue],
-                outputRange: I18nManager.isRTL
+                outputRange: inverted
                     ? [0, -(containerSize.width - thumbSize.width)]
                     : [0, containerSize.width - thumbSize.width],
             }),
@@ -645,7 +646,7 @@ export class Slider extends PureComponent<SliderProps, SliderState> {
             trackMarksValues.map((v) =>
                 v.interpolate({
                     inputRange: [minimumValue, maximumValue],
-                    outputRange: I18nManager.isRTL
+                    outputRange: inverted
                         ? [0, -(containerSize.width - thumbSize.width)]
                         : [0, containerSize.width - thumbSize.width],
                 }),
@@ -675,13 +676,13 @@ export class Slider extends PureComponent<SliderProps, SliderState> {
             width:
                 interpolatedTrackValues.length === 1
                     ? Animated.add(
-                          interpolatedTrackValues[0],
-                          thumbSize.width / 2,
-                      )
+                        interpolatedTrackValues[0],
+                        thumbSize.width / 2,
+                    )
                     : Animated.add(
-                          Animated.multiply(minThumbValue, -1),
-                          maxThumbValue,
-                      ),
+                        Animated.multiply(minThumbValue, -1),
+                        maxThumbValue,
+                    ),
             backgroundColor: minimumTrackTintColor,
             ...valueVisibleStyle,
         } as ViewStyle;
@@ -766,9 +767,9 @@ export class Slider extends PureComponent<SliderProps, SliderState> {
                                 renderThumbComponent
                                     ? {}
                                     : {
-                                          backgroundColor: thumbTintColor,
-                                          ...thumbStyle,
-                                      },
+                                        backgroundColor: thumbTintColor,
+                                        ...thumbStyle,
+                                    },
                                 {
                                     transform: [
                                         {
